@@ -10,22 +10,23 @@ use Redirect,Response;
 class PegawaiController extends Controller
 {
     //
-	public function index()
-    {
-    	if(request()->ajax()) {
-			return datatables()->of(Pegawai::latest()->get())
-                    ->addColumn('action', function($data){
-                        $button = '<button type="button" name="edit" id="'.$data->id.'" class="edit btn btn-primary btn-sm">Edit</button>';
-                        $button .= '&nbsp;&nbsp;';
-                        $button .= '<button type="button" name="delete" id="'.$data->id.'" class="delete btn btn-danger btn-sm">Delete</button>';
-                        return $button;
+	public function index(Request $request)
+    {	
+		if ($request->ajax()) {
+            $data = Pegawai::latest()->get();
+            return Datatables::of($data)
+                    ->addIndexColumn()
+                    ->addColumn('action', function($row){
+                           $btn = '<a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id_pegawai.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editPegawai">Ubah</a>';
+                           $btn = $btn.' <a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id_pegawai.'" data-original-title="Delete" class="btn btn-danger btn-sm deletePegawai">Hapus</a>';
+                           return $btn;
                     })
                     ->rawColumns(['action'])
                     ->make(true);
-		}
-		return view('pegawai/pegawai');
-		
-		
+        }
+      
+        return view('pegawai/pegawai',compact('pegawai'));
+		//return view('pegawai/pegawai');
     }
 	
 	public function json(){
@@ -95,25 +96,23 @@ class PegawaiController extends Controller
 	
 	public function store(Request $request)
 	{  
-		$pegawaiId = $request->pegawai_id;
-		$pegawai   = Pegawai::updateOrCreate(['id_pegawai' => $pegawaiId],
-					['nama_pegawai' => $request->nama, 'email_pegawai' => $request->email,
-					'alamat_pegawai' => $request->alamat, 'no_telp_pegawai' => $request->no_telp]);        
-		return Response::json($pegawai);
+		Pegawai::updateOrCreate(['id_pegawai' => $request->id_pegawai],
+                ['nama_pegawai' => $request->nama, 'email_pegawai' => $request->email, 
+				'alamat_pegawai' => $request->alamat, 'no_telp_pegawai' => $request->no_telp]);        
+   
+        return response()->json(['success'=>'Product saved successfully.']);
 	}
 	
 	public function edit($id)
-	{   
-		$where = array('id_pegawai' => $id);
-		$pegawai  = Pegawai::where($where)->first();
-	 
-		return Response::json($pegawai);
-	}
+    {
+        $pegawai = Pegawai::find($id);
+        return response()->json($pegawai);
+    }
 	
 	public function destroy($id)
-	{
-		$pegawai = Pegawai::where('id_pegawai',$id)->delete();
-	 
-		return Response::json($pegawai);
-	}
+    {
+        Pegawai::find($id)->delete();
+     
+        return response()->json(['success'=>'Product deleted successfully.']);
+    }
 }
